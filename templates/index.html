@@ -1,0 +1,79 @@
+<html>
+    <head>
+        <title>Ai-chan Chatbot</title>
+        <style>
+            body {
+                font-family: sans-serif; background: #fefefe; padding: 20px;
+            }
+            #chat {
+                max-width: 500px; margin: auto; border: 1px solid #ccc; padding: 15px;
+            }
+            .bot {
+                color: purple; margin: 5px 0;
+            }
+            .user {
+                color: blue; margin: 5px 0; text-align: right;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="chat">
+            <h2>Chat dengan Ai-chan 💖</h2>
+            <div id="message"></div>
+            <input id="input" placeholder="Tulis pesan..." style="width: 80%;" />
+            <button id="sendBtn" onclick="handleInput()">Kirim</button>
+        </div>
+        <script>
+            let lastQuestion = ""
+            let expectingAnswer = false
+
+            function addMessage(sender, text){
+                const div = document.createElement("div")
+                div.className = sender
+                div.textContent = text
+                document.getElementById("message").appendChild(div)
+            }
+
+            async function handleInput(){
+                const input = document.getElementById("input")
+                const message = input.value.trim()
+                if(!message) return;
+
+                input.value = "" //clear input
+                addMessage("user", message)
+
+                if(expectingAnswer){
+                    //sedang menunggu jawaban, kirim ke /teach
+                    const res = await fetch("/teach",{
+                        method: "POST",
+                        headers: { "Content-Type":"application/json" },
+                        body: JSON.stringify({ question: lastQuestion, answer: message})
+                    })
+
+                    const data = await res.json()
+                    addMessage("bot", data.message)
+                    expectingAnswer = false
+                    lastQuestion = ""
+                    return;
+                }
+
+                //Kirim pertanyaan ke /chat
+                const res = await fetch("/chat",{
+                    method: "POST",
+                    headers: { "Content-Type":"application/json" },
+                    body: JSON.stringify({ message: message})
+                })
+
+                const data = await res.json()
+                addMessage("bot", data.response)
+
+                //Kalau Ai-chan tidak tahu, aktifkan mode belajar
+                if(data.response.includes("belum tahu") || data.response.includes("belum mengerti")){
+                    lastQuestion = message
+                    expectingAnswer = true
+                }
+
+            }
+        </script>
+    </body>
+</html>
