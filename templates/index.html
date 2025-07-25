@@ -65,7 +65,7 @@
                 })
 
                 const data = await res.json()
-                addMessage("bot", data.message)
+                addMessage("bot", data.response)
 
                 //Kalau Ai-chan tidak tahu, aktifkan mode belajar
                 if(data.response.includes("belum tahu") || data.response.includes("belum mengerti")){
